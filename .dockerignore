@@ -1,0 +1,19 @@
+# ── cachés de Python ───────────────────────────────
+__pycache__/
+*.pyc
+
+# ── datasets y notebooks grandes ───────────────────
+*.parquet
+*.ipynb
+
+# ── control de versiones y metadatos ───────────────
+.git/
+.gitignore
+
+# ── variables sensibles / entornos ────────────────
+.env
+*.env
+
+# ── otros archivos pesados o temporales ────────────
+*.log
+.DS_Store
