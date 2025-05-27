@@ -16,7 +16,7 @@ def claude_chat(prompt, max_tokens=400, temp=0.3):
 
 def titan_embed(texts):
     out = br.invoke_model(
-      modelId="amazon.titan-embed-text-v2:0",
+      modelId="amazon.titan-embed-text-multilingual-v1:0",
       body=json.dumps({"inputText": texts}),
       contentType="application/json",
       accept="application/json")
