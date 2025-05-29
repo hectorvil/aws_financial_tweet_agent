@@ -1,90 +1,89 @@
 import os
 import streamlit as st
-import pandas as pd
 from src.agent import FinancialTweetAgent
 from src.plotting import build_sentiment_bar
 
-# ── Config inicial ────────────────────────────────────────────────
-st.set_page_config(page_title="Financial-Tweet Agent", layout="wide")
-st.title("Financial-Tweet Agent")
+# ──────────────────────────────────────────────────────────────────
+# Configuración general de la página
+# ──────────────────────────────────────────────────────────────────
+st.set_page_config(page_title="Financial-Tweet Agent", layout="wide", page_icon="💸")
+st.title("💸 Financial-Tweet Agent")
 
-# ── Claves necesarias ────────────────────────────────────────────
-aws_region  = os.getenv("AWS_REGION")          # para Bedrock
-twitter_key = os.getenv("TWITTER_BEARER")
+# Bucket S3 para sincronizar
+bucket_name = os.getenv("BUCKET_NAME")          # debe venir en variables de entorno
 
-if not aws_region:
-    st.warning("AWS_REGION no está configurada: Bedrock podría fallar.")
-if not twitter_key:
-    st.warning("TWITTER_BEARER no configurada. La búsqueda en vivo no funcionará.")
-
-# ── Crea el agente (solo una vez) ────────────────────────────────
+# Crea / recupera el agente en la sesión
 if "agent" not in st.session_state:
     st.session_state.agent = FinancialTweetAgent()
 agent: FinancialTweetAgent = st.session_state.agent
 
-# ── Sidebar: carga de parquet ────────────────────────────────────
-st.sidebar.header("Cargar archivo")
-parquet_file = st.sidebar.file_uploader("Sube un archivo .parquet", type="parquet")
+# ──────────────────────────────────────────────────────────────────
+# Sidebar – carga de datos
+# ──────────────────────────────────────────────────────────────────
+st.sidebar.header("📥 Datos")
 
-if parquet_file and "processed" not in st.session_state:
-    st.sidebar.success("✅ Archivo subido")
-    with st.spinner("🧠 Procesando: limpiando, clasificando, generando embeddings..."):
-        agent.ingest(parquet_file)
-    st.session_state.processed = True
+# 1) Sincronizar Parquets desde S3
+if bucket_name and st.sidebar.button("🔄 Sincronizar S3"):
+    with st.spinner("Descargando Parquets de S3…"):
+        agent.ingest_s3_prefix(bucket_name)          # añade nuevos registros
+    st.sidebar.success("✅ Datos sincronizados")
 
-elif "processed" in st.session_state:
-    st.sidebar.info("Usando dataset ya cargado en memoria")
+# 2) Subir archivo local (Parquet)
+uploaded = st.sidebar.file_uploader("o sube un archivo .parquet", type="parquet")
+if uploaded is not None:
+    with st.spinner("Procesando Parquet…"):
+        agent.ingest(uploaded)
+    st.sidebar.success("✅ Archivo cargado")
 
-else:
-    st.stop()               # espera a que suban un archivo
+# Si aún no hay datos, muestra aviso y detiene
+if agent.df.empty:
+    st.info("Aún no hay tweets cargados. Sincroniza S3 o sube un Parquet para continuar.")
+    st.stop()
 
-# ── Tabs principales ─────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["🤖 Chat histórico", "⚡ Live", "📊 Dashboard"])
+# ──────────────────────────────────────────────────────────────────
+# Pestañas principales
+# ──────────────────────────────────────────────────────────────────
+tab_dash, tab_chat = st.tabs(["📊 Dashboard", "🤖 Chat histórico"])
 
-# ── Tab 1: Chat histórico (Bedrock RAG) ──────────────────────────
-with tab1:
-    st.subheader("Haz una pregunta sobre el corpus histórico")
-    question = st.text_input("Pregunta (ej. ¿Qué se dice de NVIDIA?)")
-    if question:
-        with st.spinner("🧠 Pensando..."):
-            answer = agent.insight_hist(question)
-            st.success(answer)
-
-# ── Tab 2: Live Search ───────────────────────────────────────────
-with tab2:
-    st.subheader("🔍 Buscar tweets en vivo")
-    live_query = st.text_input("Consulta live (ej. TSLA OR NVDA)")
-    if live_query:
-        if twitter_key:
-            with st.spinner("Buscando tweets recientes..."):
-                live_df = agent.live_search(live_query)
-            if not live_df.empty:
-                st.dataframe(live_df[["text", "topic", "sentiment"]])
-            else:
-                st.info("No se encontraron tweets en vivo.")
-        else:
-            st.error("No tienes TWITTER_BEARER configurado.")
-
-# ── Tab 3: Dashboard ─────────────────────────────────────────────
-with tab3:
-    st.subheader("Análisis de sentimiento por ticker")
-
-    # Recuento rápido de menciones
-    with st.expander("Ver recuento de menciones por ticker"):
-        ticker_counts = (
-            agent.df.explode("tickers")
-                    .dropna(subset=["tickers"])
-                    .value_counts("tickers")
-        )
-        top_n = st.slider("Top-N", 5, 50, 20, key="topn_slider")
-        st.dataframe(ticker_counts.head(top_n), use_container_width=True)
-
-    # Gráfica de barras
-    min_m  = st.slider("Mínimo de menciones por ticker", 10, 300, 50, 10)
-    metric = st.selectbox("Métrica a mostrar", ["neg_ratio", "pos_ratio", "total"])
-
-    piv = agent.pivot(min_m)
+# ------------------------------------------------------------------
+# 1️⃣ Dashboard
+# ------------------------------------------------------------------
+with tab_dash:
+    st.subheader("Sentimiento por ticker (único ticker: BBVA)")
+    piv = agent.pivot(min_mentions=1)               # tendrá sólo “BBVA”
     if not piv.empty:
-        st.plotly_chart(build_sentiment_bar(piv, metric), use_container_width=True)
+        st.plotly_chart(
+            build_sentiment_bar(piv, metric="neg_ratio"),
+            use_container_width=True
+        )
     else:
-        st.warning("No hay suficientes datos para mostrar.")
+        st.warning("No hay suficientes datos para graficar.")
+
+    # ── Ratio fijo BBVA ───────────────────────────────────────────
+    st.subheader("Sentimiento global «BBVA» (acumulado)")
+    bbva = agent.df[agent.df["text"].str.contains("BBVA", case=False, na=False)]
+    pos = (bbva["sentiment"] == "positive").sum()
+    neg = (bbva["sentiment"] == "negative").sum()
+    total = pos + neg or 1
+    col1, col2 = st.columns(2)
+    col1.metric("Ratio positivo", f"{pos/total:.1%}")
+    col2.metric("Ratio negativo", f"{neg/total:.1%}")
+
+    # ── Tendencia 7-días (imagen PNG generada por Lambda) ─────────
+    st.subheader("📈 Tendencia 7 días – sentimiento «BBVA»")
+    if bucket_name:
+        img_url = f"https://{bucket_name}.s3.amazonaws.com/charts/sentiment_trend.png"
+        st.image(img_url, caption="Se actualiza automáticamente cada 6 h")
+    else:
+        st.info("Define BUCKET_NAME en variables de entorno para cargar la gráfica.")
+
+# ------------------------------------------------------------------
+# 2️⃣ Chat histórico (RAG sobre corpus almacenado)
+# ------------------------------------------------------------------
+with tab_chat:
+    st.subheader("Haz una pregunta sobre los tweets almacenados")
+    query = st.text_input("Pregunta", placeholder="¿Qué opinan sobre la fortaleza financiera de BBVA?")
+    if query:
+        with st.spinner("Consultando corpus…"):
+            answer = agent.insight_hist(query)
+        st.write(answer)
