@@ -99,13 +99,15 @@ def handler(event, context):
     rows = []
     for tw in tweets:
         rows.append({
-            "tweet_id"  : tw.id,
-            "author_id" : tw.author_id,
-            "created_at": tw.created_at,
-            "text"      : tw.text,
-            "sentiment" : bedrock_sentiment(tw.text),
-            "source"    : "news" if f"@{tw.author_id}" in FIN_ACCOUNTS else "twitter"
-        })
+          "tweet_id"  : tw.id,
+          "author_id" : tw.author_id,
+          "created_at": tw.created_at,
+          "text"      : tw.text,
+          "sentiment" : bedrock_sentiment(tw.text),
+          "tickers"   : ["BBVA"],          #  ←  NUEVO
+          "source"    : "news" if f"@{tw.author_id}" in FIN_ACCOUNTS else "twitter"
+    })
+
     df = pd.DataFrame(rows)
 
     # 4) Guarda Parquet particionado year/month/day/hour
