@@ -31,7 +31,19 @@ Un sistema automático de análisis de sentimiento en tweets que mencionan a **B
 | **6. Subida de PNG** | Se guardan dos archivos en `s3://.../charts/` | PNG: uno para `app=True`, otro general |
 
 ---
+## ¿Dónde encontrar cada parte?
 
+| Carpeta / Archivo                 | Componente                          | Descripción                                                                                 |
+|----------------------------------|-------------------------------------|---------------------------------------------------------------------------------------------|
+| `lambda/`                        | Lambda ZIP (`bbvaTweetIngestor`)    | Función que se ejecuta cada 2 horas (vía AWS Scheduler). Ingiere tweets que mencionan a "BBVA", clasifica el sentimiento usando Claude 3 Sonnet (Amazon Bedrock), etiqueta `is_app` y `is_futbol`, y guarda archivos `.parquet` en S3 particionados por `year/month/day/hour`. |
+| `bbva_plot_lambda/`              | Lambda contenedor (`bbvaTrendPlotContainer`) | Función basada en contenedor (Docker) que se activa automáticamente cuando se sube un nuevo `.parquet` a `s3://.../tweets/`. Carga los últimos 30 archivos, excluye `is_futbol=True`, filtra por `is_app`, y genera gráficos de tendencia de sentimiento (.png) por hora. |
+| `bbva_plot_lambda/Dockerfile`    | Dockerfile del contenedor           | Imagen base para ejecutar `bbvaTrendPlotContainer` con las dependencias necesarias (`matplotlib`, `pandas`, `pyarrow`, `s3fs`). Se despliega como imagen a ECR y se conecta a Lambda. |
+| `lambda/lambda_function.py`      | Código de `bbvaTweetIngestor`       | Lógica completa de ingesta: búsqueda en Twitter, clasificación con Bedrock, creación del `.parquet` y escritura en S3. |
+| `bbva_plot_lambda/lambda_function.py` | Código de `bbvaTrendPlotContainer` | Lógica de visualización: lectura de Parquet, agrupación por hora y sentimiento, generación y guardado de gráficos en `s3://.../charts/`. |
+| `lambda_build/`                  | Carpeta de construcción local       | Carpeta temporal usada para empaquetar la función `bbvaTweetIngestor` en formato `.zip`. **No se sube al repositorio**. |
+| `.gitignore`                     | Exclusión de archivos locales       | Evita subir `.zip`, entornos virtuales, imágenes, cachés de Python y carpetas de build temporales. |
+
+---
 ## 📊 Qué hace cada Lambda
 
 ### 1. `bbvaTweetIngestor` (ZIP)
