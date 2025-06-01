@@ -70,3 +70,38 @@ Un sistema automático de análisis de sentimiento en tweets que mencionan a **B
 ```bash
 cd lambda/
 python lambda_function.py
+```
+---
+
+## 🧪 Módulo interactivo (en fase de pruebas)
+
+Este repositorio también incluye una **fase experimental** que permite explorar los tweets clasificados a través de un **agente interactivo en Streamlit**, útil para:
+
+- 🧠 Hacer preguntas sobre el historial de tweets usando RAG (Claude 3 Sonnet via Bedrock)
+- ⚡ Buscar tweets en tiempo real desde cuentas financieras
+- 📊 Visualizar sentimiento por *ticker* en dashboards
+
+> 🧪 **Esta funcionalidad está en fase de pruebas. No está integrada aún a producción.**
+
+---
+
+### 🧩 Archivos de esta segunda parte
+
+| Carpeta / Archivo       | Rol                                                                 |
+|-------------------------|----------------------------------------------------------------------|
+| `app.py`                | Interfaz principal de Streamlit                                      |
+| `agent.py`              | Clase `FinancialTweetAgent` que orquesta ingestión, RAG y dashboard |
+| `vector_db.py`          | Base vectorial ChromaDB con embeddings vía Titan o MiniLM            |
+| `twitter_live.py`       | Búsqueda en tiempo real en Twitter                                   |
+| `data_pipeline.py`      | Limpieza de texto, etiquetado con FinBERT y clasificación temática   |
+| `bedrock_client.py`     | Cliente de Amazon Bedrock para Claude-3 y Titan                      |
+| `plotting.py`           | Visualización de sentimiento con Plotly                              |
+| `requirements.txt`      | Lista de dependencias para entorno local                             |
+
+---
+
+### 🚀 ¿Cómo probar esta parte?
+
+1. Instala las dependencias:
+   ```bash
+   pip install -r requirements.txt
