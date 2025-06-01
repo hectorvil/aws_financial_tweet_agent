@@ -63,14 +63,32 @@ Un sistema automático de análisis de sentimiento en tweets que mencionan a **B
 
 ---
 
-## 🛠 Cómo ejecutarlo localmente (para pruebas)
+## 🛠 Cómo probarlo localmente
 
-### Ingesta (opcional)
+Aunque el sistema ya se encuentra **en producción**, ejecutándose automáticamente cada 2 horas mediante AWS Scheduler, también puedes probar las funciones de forma local para depuración o desarrollo.
 
+### 🐍 A. Probar la función de ingesta (`bbvaTweetIngestor`)
+
+1. Asegúrate de tener Python 3.9+ y las siguientes librerías instaladas:
+   ```bash
+   pip install tweepy boto3 pandas pyarrow```
+2. Exporta tus variables de entorno necesarias:
 ```bash
-cd lambda/
+  export TWITTER_BEARER="tu_token"
+  export BUCKET_NAME="tu-bucket-s3"
+```
+3. Corre la función localmente:
+```bash
+   cd lambda/
 python lambda_function.py
 ```
+Resultado:
+- Buscará tweets de BBVA
+
+- Clasificará con Claude 3 Sonnet (vía Bedrock)
+
+- Guardará un .parquet nuevo localmente o en S3 según configuración. Si se guarda en S3, automaticamente se activará el trigger de bbvaTrendPlotContainer y producirá un png con la gráfica correspondiente.
+
 ---
 
 ## 🧪 Módulo interactivo: Research portafolio de inversión (en fase de pruebas)
