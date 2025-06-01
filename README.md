@@ -102,6 +102,32 @@ Este repositorio también incluye una **fase experimental** que permite explorar
 
 ### 🚀 ¿Cómo probar esta parte?
 
-1. Instala las dependencias:
-   ```bash
-   pip install -r requirements.txt
+## ☁️ Despliegue opcional en AWS: App interactiva (Streamlit)
+
+Además del análisis automático con Lambda, puedes desplegar la app `app.py` como una interfaz web persistente en **AWS App Runner**.
+
+> 🔒 Recomendado para entornos de prueba o producción donde se requiere acceso web constante al dashboard.
+
+---
+
+### 🚀 Opción recomendada: **AWS App Runner**
+
+Permite desplegar aplicaciones Streamlit directamente desde un repositorio GitHub o contenedor, sin preocuparte por servidores.
+
+#### 📦 Paso 1. Añadir un `Dockerfile` al repo
+
+Crea un archivo llamado `Dockerfile` con este contenido:
+
+```dockerfile
+# Dockerfile para lanzar Streamlit + Bedrock
+FROM python:3.11-slim
+
+WORKDIR /app
+COPY . /app
+
+RUN pip install --no-cache-dir -r requirements.txt
+
+EXPOSE 8501
+
+CMD ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0"]
+
