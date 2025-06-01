@@ -73,12 +73,12 @@ python lambda_function.py
 ```
 ---
 
-## 🧪 Módulo interactivo (en fase de pruebas)
+## 🧪 Módulo interactivo: Research portafolio de inversión (en fase de pruebas)
 
 Este repositorio también incluye una **fase experimental** que permite explorar los tweets clasificados a través de un **agente interactivo en Streamlit**, útil para:
 
 - 🧠 Hacer preguntas sobre el historial de tweets usando RAG (Claude 3 Sonnet via Bedrock)
-- ⚡ Buscar tweets en tiempo real desde cuentas financieras
+- ⚡ Buscar tweets en tiempo real desde cuentas financieras, mayormente especializado en finanzas mediante FinBert
 - 📊 Visualizar sentimiento por *ticker* en dashboards
 
 > 🧪 **Esta funcionalidad está en fase de pruebas. No está integrada aún a producción.**
