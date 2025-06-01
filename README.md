@@ -14,7 +14,7 @@ Un sistema automático de análisis de sentimiento en tweets que mencionan a **B
 - ⚽ **Filtro de tweets de fútbol** para no contaminar la señal financiera
 - 📱 **Identificación de tweets sobre la app BBVA**
 - 🧾 **Almacenamiento en Parquet** en S3 particionado por `year/month/day/hour`
-- 📈 **Generación de gráficos** automáticos por hora (App y General)
+- 📈 **Generación de gráficos** automáticos cada 2 horas (App y General)
 - ☁️ **Despliegue sin servidores** con AWS Lambda y contenedores
 
 ---
