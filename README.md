@@ -79,8 +79,8 @@ Aunque el sistema ya se encuentra **en producción**, ejecutándose automáticam
 ```
 3. Corre la función localmente:
 ```bash
-   cd lambda/
-python lambda_function.py
+  cd lambda/
+  python lambda_function.py
 ```
 Resultado:
 - Buscará tweets de BBVA
